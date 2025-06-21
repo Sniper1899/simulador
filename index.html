@@ -113,7 +113,7 @@
 </head>
 <body class="p-2 sm:p-4">
 
-    <div id="draft-simulator" class="main-content w-full max-w-7xl mx-auto flex flex-col min-h-screen">
+    <div id="draft-simulator" class="main-content w-full max-w-screen-xl mx-auto flex flex-col min-h-screen">
         
         <header class="text-center mb-4 shrink-0">
             <h1 class="text-4xl sm:text-5xl font-extrabold main-title">SIMULADOR DE DRAFTEO</h1>
@@ -166,6 +166,7 @@
 
                     <div id="analysis-panel" class="hidden flex-grow flex flex-col justify-center items-center modern-panel p-4">
                         <div id="winner-declaration" class="text-center"></div>
+                        <button id="show-details-button" class="mt-4 styled-button text-white font-bold py-2 px-6 rounded-lg text-md tracking-wider">Ver Análisis Táctico</button>
                     </div>
                 </section>
 
@@ -186,14 +187,57 @@
     <div id="phase-overlay-container" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
         <h2 id="phase-text" class="text-6xl font-extrabold text-white"></h2>
     </div>
+    
+    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-40 opacity-0 pointer-events-none">
+        <div id="modal-panel" class="modal-content-area w-full max-w-4xl max-h-[90vh] flex flex-col transform scale-95 opacity-0">
+            <header class="p-4 border-b border-white/10 flex justify-between items-center">
+                <h2 class="text-2xl font-bold main-title">Análisis Táctico Detallado</h2>
+                <button id="close-modal-button" class="text-2xl text-white hover:text-red-500 transition">&times;</button>
+            </header>
+            <main id="modal-content" class="p-6 overflow-y-auto"></main>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const pokemonData = [
-                { id: "venusaur", name: "Venusaur", role: "Attacker"}, { id: "charizard", name: "Charizard", role: "All-Rounder"}, { id: "blastoise", name: "Blastoise", role: "Defender"}, { id: "pikachu", name: "Pikachu", role: "Attacker"}, { id: "clefable", name: "Clefable", role: "Supporter"}, { id: "alolan-ninetales", name: "A. Ninetales", role: "Attacker"}, { id: "wigglytuff", name: "Wigglytuff", role: "Supporter"}, { id: "machamp", name: "Machamp", role: "All-Rounder"}, { id: "slowbro", name: "Slowbro", role: "Defender"}, { id: "gengar", name: "Gengar", role: "Speedster"}, { id: "mr-mime", name: "Mr. Mime", role: "Supporter"}, { id: "gyarados", name: "Gyarados", role: "All-Rounder"}, { id: "snorlax", name: "Snorlax", role: "Defender"}, { id: "dragonite", name: "Dragonite", role: "All-Rounder"}, { id: "mewtwo-x", name: "Mewtwo X", role: "All-Rounder"}, { id: "mewtwo-y", name: "Mewtwo Y", role: "Attacker"}, { id: "mew", name: "Mew", role: "Attacker"}, { id: "azumarill", name: "Azumarill", role: "All-Rounder"}, { id: "espeon", name: "Espeon", role: "Attacker"}, { id: "umbreon", name: "Umbreon", role: "Defender"}, { id: "scizor", name: "Scizor", role: "All-Rounder"}, { id: "blissey", name: "Blissey", role: "Supporter"}, { id: "tyranitar", name: "Tyranitar", role: "All-Rounder"}, { id: "gardevoir", name: "Gardevoir", role: "Attacker"}, { id: "sableye", name: "Sableye", role: "Supporter"}, { id: "absol", name: "Absol", role: "Speedster"}, { id: "metagross", name: "Metagross", role: "All-Rounder"}, { id: "garchomp", name: "Garchomp", role: "All-Rounder"}, { id: "lucario", name: "Lucario", role: "All-Rounder"}, { id: "leafeon", name: "Leafeon", role: "Speedster"}, { id: "glaceon", name: "Glaceon", role: "Attacker"}, { id: "crustle", name: "Crustle", role: "Defender"}, { id: "greninja", name: "Greninja", role: "Attacker"}, { id: "talonflame", name: "Talonflame", role: "Speedster"}, { id: "aegislash", name: "Aegislash", role: "All-Rounder"}, { id: "sylveon", name: "Sylveon", role: "Attacker"}, { id: "goodra", name: "Goodra", role: "Defender"}, { id: "trevenant", name: "Trevenant", role: "Defender"}, { id: "hoopa", name: "Hoopa", role: "Supporter"}, { id: "decidueye", name: "Decidueye", role: "Attacker"}, { id: "tsareena", name: "Tsareena", role: "All-Rounder"}, { id: "comfey", name: "Comfey", role: "Supporter"}, { id: "cinderace", name: "Cinderace", role: "Attacker"}, { id: "inteleon", name: "Inteleon", role: "Attacker"}, { id: "eldegoss", name: "Eldegoss", role: "Supporter"}, { id: "cramorant", name: "Cramorant", role: "Attacker"}, { id: "duraludon", name: "Duraludon", role: "Attacker"}, { id: "zeraora", name: "Zeraora", role: "Speedster"}, { id: "lapras", name: "Lapras", role: "Defender"}, { id: "chandelure", name: "Chandelure", role: "Attacker"}, { id: "dodrio", name: "Dodrio", role: "Speedster"}, { id: "buzzwole", name: "Buzzwole", role: "All-Rounder"}, { id: "zacian", name: "Zacian", role: "All-Rounder"}, { id: "urshifu", name: "Urshifu", role: "All-Rounder"}, { id: "dragapult", name: "Dragapult", role: "Attacker"}, { id: "mamoswine", name: "Mamoswine", role: "Defender"}, { id: "delphox", name: "Delphox", role: "Attacker"}, { id: "zoroark", name: "Zoroark", role: "Speedster"}, { id: "mimikyu", name: "Mimikyu", role: "All-Rounder"}, { id: "falinks", name: "Falinks", role: "All-Rounder"}, { id: "blaziken", name: "Blaziken", role: "All-Rounder"}, { id: "meowscarada", name: "Meowscarada", role: "Speedster"}, { id: "miraidon", name: "Miraidon", role: "Attacker"}, { id: "ceruledge", name: "Ceruledge", role: "All-Rounder"}, { id: "armarouge", name: "Armarouge", role: "Attacker"}, { id: "alcremie", name: "Alcremie", role: "Supporter"}, { id: "ho-oh", name: "Ho-Oh", role: "Defender"}, { id: "alolan-raichu", name: "A. Raichu", role: "Attacker"}, { id: "darkrai", name: "Darkrai", role: "Speedster"}, { id: "greedent", name: "Greedent", role: "Defender"}, { id: "suicune", name: "Suicune", role: "All-Rounder"}, { id: "tinkaton", name: "Tinkaton", role: "All-Rounder"}
+                { id: "venusaur", name: "Venusaur", role: "Attacker", scores: { damage: 5, tank: 2, cc: 2, mobility: 2, support: 0 } }, { id: "charizard", name: "Charizard", role: "All-Rounder", scores: { damage: 4, tank: 3, cc: 2, mobility: 3, support: 0 } }, { id: "blastoise", name: "Blastoise", role: "Defender", scores: { damage: 2, tank: 5, cc: 5, mobility: 2, support: 0 } }, { id: "pikachu", name: "Pikachu", role: "Attacker", scores: { damage: 4, tank: 1, cc: 4, mobility: 2, support: 0 } }, { id: "clefable", name: "Clefable", role: "Supporter", scores: { damage: 1, tank: 2, cc: 3, mobility: 2, support: 5 } }, { id: "alolan-ninetales", name: "A. Ninetales", role: "Attacker", scores: { damage: 4, tank: 1, cc: 5, mobility: 2, support: 0 } }, { id: "wigglytuff", name: "Wigglytuff", role: "Supporter", scores: { damage: 2, tank: 3, cc: 5, mobility: 2, support: 3 } }, { id: "machamp", name: "Machamp", role: "All-Rounder", scores: { damage: 4, tank: 3, cc: 3, mobility: 3, support: 0 } }, { id: "slowbro", name: "Slowbro", role: "Defender", scores: { damage: 2, tank: 5, cc: 4, mobility: 1, support: 1 } }, { id: "gengar", name: "Gengar", role: "Speedster", scores: { damage: 5, tank: 1, cc: 2, mobility: 5, support: 0 } }, { id: "mr-mime", name: "Mr. Mime", role: "Supporter", scores: { damage: 3, tank: 2, cc: 4, mobility: 2, support: 4 } }, { id: "gyarados", name: "Gyarados", role: "All-Rounder", scores: { damage: 4, tank: 3, cc: 2, mobility: 3, support: 0 } }, { id: "snorlax", name: "Snorlax", role: "Defender", scores: { damage: 1, tank: 5, cc: 4, mobility: 1, support: 2 } }, { id: "dragonite", name: "Dragonite", role: "All-Rounder", scores: { damage: 5, tank: 3, cc: 2, mobility: 3, support: 0 } }, { id: "mewtwo-x", name: "Mewtwo X", role: "All-Rounder", scores: { damage: 5, tank: 4, cc: 3, mobility: 3, support: 0 } }, { id: "mewtwo-y", name: "Mewtwo Y", role: "Attacker", scores: { damage: 5, tank: 2, cc: 3, mobility: 3, support: 0 } }, { id: "mew", name: "Mew", role: "Attacker", scores: { damage: 5, tank: 1, cc: 2, mobility: 4, support: 1 } }, { id: "azumarill", name: "Azumarill", role: "All-Rounder", scores: { damage: 4, tank: 3, cc: 1, mobility: 3, support: 0 } }, { id: "espeon", name: "Espeon", role: "Attacker", scores: { damage: 5, tank: 1, cc: 4, mobility: 2, support: 0 } }, { id: "umbreon", name: "Umbreon", role: "Defender", scores: { damage: 2, tank: 4, cc: 5, mobility: 3, support: 1 } }, { id: "scizor", name: "Scizor", role: "All-Rounder", scores: { damage: 4, tank: 4, cc: 1, mobility: 3, support: 0 } }, { id: "blissey", name: "Blissey", role: "Supporter", scores: { damage: 1, tank: 4, cc: 2, mobility: 2, support: 5 } }, { id: "tyranitar", name: "Tyranitar", role: "All-Rounder", scores: { damage: 5, tank: 4, cc: 2, mobility: 2, support: 0 } }, { id: "gardevoir", name: "Gardevoir", role: "Attacker", scores: { damage: 5, tank: 1, cc: 3, mobility: 2, support: 0 } }, { id: "sableye", name: "Sableye", role: "Supporter", scores: { damage: 1, tank: 2, cc: 4, mobility: 4, support: 3 } }, { id: "absol", name: "Absol", role: "Speedster", scores: { damage: 5, tank: 1, cc: 1, mobility: 5, support: 0 } }, { id: "metagross", name: "Metagross", role: "All-Rounder", scores: { damage: 4, tank: 4, cc: 2, mobility: 3, support: 0 } }, { id: "garchomp", name: "Garchomp", role: "All-Rounder", scores: { damage: 5, tank: 3, cc: 2, mobility: 2, support: 0 } }, { id: "lucario", name: "Lucario", role: "All-Rounder", scores: { damage: 4, tank: 3, cc: 2, mobility: 4, support: 0 } }, { id: "leafeon", name: "Leafeon", role: "Speedster", scores: { damage: 4, tank: 2, cc: 1, mobility: 5, support: 0 } }, { id: "glaceon", name: "Glaceon", role: "Attacker", scores: { damage: 5, tank: 1, cc: 3, mobility: 2, support: 0 } }, { id: "crustle", name: "Crustle", role: "Defender", scores: { damage: 2, tank: 4, cc: 3, mobility: 4, support: 0 } }, { id: "greninja", name: "Greninja", role: "Attacker", scores: { damage: 5, tank: 1, cc: 1, mobility: 4, support: 0 } }, { id: "talonflame", name: "Talonflame", role: "Speedster", scores: { damage: 4, tank: 1, cc: 2, mobility: 5, support: 0 } }, { id: "aegislash", name: "Aegislash", role: "All-Rounder", scores: { damage: 4, tank: 4, cc: 2, mobility: 3, support: 0 } }, { id: "sylveon", name: "Sylveon", role: "Attacker", scores: { damage: 5, tank: 2, cc: 1, mobility: 2, support: 0 } }, { id: "goodra", name: "Goodra", role: "Defender", scores: { damage: 2, tank: 5, cc: 3, mobility: 2, support: 1 } }, { id: "trevenant", name: "Trevenant", role: "Defender", strongAgainst: ["Speedster"], scores: { damage: 2, tank: 4, cc: 5, mobility: 2, support: 2 } }, { id: "hoopa", name: "Hoopa", role: "Supporter", strongAgainst: [], scores: { damage: 3, tank: 1, cc: 2, mobility: 5, support: 5 } }, { id: "decidueye", name: "Decidueye", role: "Attacker", strongAgainst: ["Defender"], scores: { damage: 5, tank: 1, cc: 1, mobility: 2, support: 0 } }, 
+                { id: "tsareena", name: "Tsareena", role: "All-Rounder", strongAgainst: ["Attacker", "Supporter"], scores: { damage: 4, tank: 3, cc: 3, mobility: 4, support: 0 } }, 
+                { id: "comfey", name: "Comfey", role: "Supporter", strongAgainst: [], scores: { damage: 1, tank: 1, cc: 3, mobility: 4, support: 5 } }, 
+                { id: "cinderace", name: "Cinderace", role: "Attacker", strongAgainst: ["Defender"], scores: { damage: 5, tank: 1, cc: 1, mobility: 3, support: 0 } }, 
+                { id: "inteleon", name: "Inteleon", role: "Attacker", strongAgainst: ["Supporter"], scores: { damage: 5, tank: 1, cc: 1, mobility: 4, support: 0 } }, 
+                { id: "eldegoss", name: "Eldegoss", role: "Supporter", strongAgainst: [], scores: { damage: 1, tank: 2, cc: 2, mobility: 3, support: 5 } }, 
+                { id: "cramorant", name: "Cramorant", role: "Attacker", strongAgainst: ["All-Rounder"], scores: { damage: 4, tank: 2, cc: 3, mobility: 3, support: 0 } }, 
+                { id: "duraludon", name: "Duraludon", role: "Attacker", strongAgainst: ["Defender"], scores: { damage: 5, tank: 2, cc: 2, mobility: 1, support: 0 } }, 
+                { id: "zeraora", name: "Zeraora", role: "Speedster", strongAgainst: ["Attacker"], scores: { damage: 4, tank: 2, cc: 2, mobility: 5, support: 0 } }, 
+                { id: "lapras", name: "Lapras", role: "Defender", strongAgainst: ["Speedster"], scores: { damage: 3, tank: 5, cc: 4, mobility: 3, support: 1 } }, 
+                { id: "chandelure", name: "Chandelure", role: "Attacker", strongAgainst: ["Defender"], scores: { damage: 5, tank: 1, cc: 2, mobility: 2, support: 0 } }, 
+                { id: "dodrio", name: "Dodrio", role: "Speedster", strongAgainst: ["Supporter", "Attacker"], scores: { damage: 4, tank: 2, cc: 1, mobility: 5, support: 0 } }, 
+                { id: "buzzwole", name: "Buzzwole", role: "All-Rounder", strongAgainst: ["Defender"], scores: { damage: 4, tank: 3, cc: 4, mobility: 2, support: 0 } }, 
+                { id: "zacian", name: "Zacian", role: "All-Rounder", strongAgainst: ["All-Rounder"], scores: { damage: 5, tank: 3, cc: 1, mobility: 4, support: 0 } }, 
+                { id: "urshifu", name: "Urshifu", role: "All-Rounder", strongAgainst: ["Attacker"], scores: { damage: 5, tank: 2, cc: 3, mobility: 4, support: 0 } }, 
+                { id: "dragapult", name: "Dragapult", role: "Attacker", strongAgainst: ["Defender"], scores: { damage: 5, tank: 1, cc: 1, mobility: 4, support: 0 } }, 
+                { id: "mamoswine", name: "Mamoswine", role: "Defender", strongAgainst: ["Speedster", "Attacker"], scores: { damage: 3, tank: 4, cc: 5, mobility: 2, support: 0 } }, 
+                { id: "delphox", name: "Delphox", role: "Attacker", strongAgainst: ["All-Rounder"], scores: { damage: 5, tank: 1, cc: 3, mobility: 2, support: 0 } }, 
+                { id: "zoroark", name: "Zoroark", role: "Speedster", strongAgainst: ["Attacker"], scores: { damage: 5, tank: 1, cc: 1, mobility: 5, support: 0 } }, 
+                { id: "mimikyu", name: "Mimikyu", role: "All-Rounder", strongAgainst: ["Attacker"], scores: { damage: 4, tank: 3, cc: 3, mobility: 3, support: 0 } }, 
+                { id: "falinks", name: "Falinks", role: "All-Rounder", strongAgainst: ["Defender"], scores: { damage: 3, tank: 3, cc: 4, mobility: 3, support: 1 } }, 
+                { id: "blaziken", name: "Blaziken", role: "All-Rounder", strongAgainst: ["Attacker"], scores: { damage: 5, tank: 2, cc: 2, mobility: 4, support: 0 } }, 
+                { id: "meowscarada", name: "Meowscarada", role: "Speedster", strongAgainst: ["Attacker", "Supporter"], scores: { damage: 5, tank: 1, cc: 2, mobility: 5, support: 0 } }, 
+                { id: "miraidon", name: "Miraidon", role: "Attacker", strongAgainst: ["All-Rounder"], skins: ["https://unite.pokemon.com/images/pokemon/miraidon/stat/stat-miraidon.png"], scores: { damage: 5, tank: 2, cc: 2, mobility: 3, support: 0 } }, 
+                { id: "ceruledge", name: "Ceruledge", role: "All-Rounder", strongAgainst: ["Attacker"], skins: ["https://unite.pokemon.com/images/pokemon/ceruledge/stat/stat-ceruledge.png"], scores: { damage: 4, tank: 3, cc: 1, mobility: 4, support: 0 } }, 
+                { id: "armarouge", name: "Armarouge", role: "Attacker", strongAgainst: ["Defender"], skins: ["https://unite.pokemon.com/images/pokemon/armarouge/stat/stat-armarouge.png"], scores: { damage: 5, tank: 2, cc: 1, mobility: 2, support: 0 } }, 
+                { id: "alcremie", name: "Alcremie", role: "Supporter", strongAgainst: [], skins: ["https://unite.pokemon.com/images/pokemon/alcremie/stat/stat-alcremie.png"], scores: { damage: 2, tank: 2, cc: 4, mobility: 2, support: 5 } }, 
+                { id: "ho-oh", name: "Ho-Oh", role: "Defender", strongAgainst: ["Attacker"], skins: ["https://unite.pokemon.com/images/pokemon/ho-oh/stat/stat-ho-oh.png"], scores: { damage: 3, tank: 5, cc: 2, mobility: 3, support: 3 } }, 
+                { id: "alolan-raichu", name: "A. Raichu", role: "Attacker", strongAgainst: ["All-Rounder"], skins: ["https://unite.pokemon.com/images/pokemon/alolan-raichu/stat/stat-alolan-raichu.png"], scores: { damage: 4, tank: 1, cc: 4, mobility: 3, support: 0 } }, 
+                { id: "darkrai", name: "Darkrai", role: "Speedster", strongAgainst: ["Supporter", "Attacker"], skins: ["https://unite.pokemon.com/images/pokemon/darkrai/stat/stat-darkrai.png"], scores: { damage: 4, tank: 1, cc: 5, mobility: 3, support: 0 } }, 
+                { id: "greedent", name: "Greedent", role: "Defender", strongAgainst: ["Attacker"], skins: ["https://unite.pokemon.com/images/pokemon/greedent/stat/stat-greedent.png"], scores: { damage: 2, tank: 4, cc: 2, mobility: 5, support: 2 } }, 
+                { id: "suicune", name: "Suicune", role: "All-Rounder", strongAgainst: ["Defender"], skins: ["https://unite.pokemon.com/images/pokemon/suicune/stat/stat-suicune.png"], scores: { damage: 3, tank: 4, cc: 4, mobility: 3, support: 1 } }, 
+                { id: "tinkaton", name: "Tinkaton", role: "All-Rounder", strongAgainst: ["Attacker", "Defender"], skins: ["https://unite.pokemon.com/images/pokemon/tinkaton/stat/stat-tinkaton.png"], scores: { damage: 4, tank: 3, cc: 4, mobility: 2, support: 0 } }
             ].sort((a, b) => a.name.localeCompare(b.name));
             
             let gameState;
+            let analysisResults = {};
             let timerInterval;
 
             const initialGameState = { phase: 'IDLE', turn: 'PURPLE', purpleBans: [], orangeBans: [], purplePicks: [], orangePicks: [], pickOrderIndex: 0, banOrderIndex: 0, picksMadeThisTurn: 0, selectedPokemon: null, isPaused: false };
@@ -211,6 +255,11 @@
                 analysisPanel: document.getElementById('analysis-panel'),
                 draftUI: document.getElementById('draft-ui'),
                 winnerDeclaration: document.getElementById('winner-declaration'),
+                showDetailsButton: document.getElementById('show-details-button'),
+                modalBackdrop: document.getElementById('modal-backdrop'),
+                modalPanel: document.getElementById('modal-panel'),
+                modalContent: document.getElementById('modal-content'),
+                closeModalButton: document.getElementById('close-modal-button'),
                 roleFilters: document.querySelectorAll('.role-filter-btn'),
                 startScreen: document.getElementById('start-screen'),
                 draftContainer: document.getElementById('draft-container'),
@@ -226,6 +275,7 @@
 
             function initializeDraft() {
                 gameState = JSON.parse(JSON.stringify(initialGameState));
+                analysisResults = {};
                 dom.analysisPanel.classList.add('hidden');
                 dom.draftUI.classList.remove('hidden');
                 dom.startScreen.classList.remove('hidden');
@@ -360,13 +410,80 @@
                 dom.playButton.classList.toggle('hidden', !gameState.isPaused);
             }
             
+            function calculateTeamScore(teamPicks) {
+                if (teamPicks.length < 5) return { totalScore: 0, teamScores: {}, strengths: [], weaknesses: [], roles: new Set(), roleCounts: {} };
+                let teamScores = { damage: 0, tank: 0, cc: 0, mobility: 0, support: 0 };
+                let roles = new Set(); let roleCounts = {};
+                teamPicks.forEach(p => {
+                    roles.add(p.role);
+                    roleCounts[p.role] = (roleCounts[p.role] || 0) + 1;
+                    Object.keys(p.scores).forEach(key => teamScores[key] += p.scores[key]);
+                });
+                let bonus = 0, penalty = 0;
+                if (!roles.has('Defender')) penalty += 20; if (!roles.has('Supporter')) penalty += 25;
+                if ((roleCounts['Attacker'] || 0) >= 3) penalty += 10; if ((roleCounts['Speedster'] || 0) >= 3) penalty += 15;
+                if ((roleCounts['All-Rounder'] || 0) >= 4) penalty += 10;
+                if (roles.has('Defender') && roles.has('Supporter')) bonus += 15; if (roles.size >= 4) bonus += 15;
+                const totalScore = Object.values(teamScores).reduce((a, b) => a + b, 0) + bonus - penalty;
+                let strengths = [], weaknesses = [];
+                if (teamScores.damage >= 22) strengths.push("Daño explosivo muy alto.");
+                if (teamScores.tank >= 20) strengths.push("Excelente aguante y frontline.");
+                if (teamScores.cc >= 20) strengths.push("Control de masas dominante.");
+                if (teamScores.support >= 12) strengths.push("Fuerte capacidad de soporte y curación.");
+                if (teamScores.damage < 15) weaknesses.push("Bajo potencial de daño general.");
+                if (teamScores.tank < 12) weaknesses.push("Composición frágil, vulnerable al daño explosivo.");
+                if (teamScores.cc < 12) weaknesses.push("Poco control para detener a los rivales.");
+                if (!roles.has('Defender')) weaknesses.push("Carencia de un iniciador claro.");
+                if (!roles.has('Supporter')) weaknesses.push("Falta de sostenibilidad en peleas.");
+                return { totalScore, teamScores, strengths: strengths.length ? strengths : ["Composición equilibrada."], weaknesses: weaknesses.length ? weaknesses : ["Sin debilidades obvias."], roles, roleCounts, picks: teamPicks };
+            }
+
             function showAnalysis() {
                 stopTimer();
                 dom.draftUI.classList.add('hidden'); 
                 dom.analysisPanel.classList.remove('hidden');
-                dom.winnerDeclaration.innerHTML = `<h3 class="text-2xl font-bold text-green-400">¡Drafteo Completo!</h3><p>Reinicia para empezar un nuevo draft.</p>`;
+                analysisResults.purple = calculateTeamScore(gameState.purplePicks);
+                analysisResults.orange = calculateTeamScore(gameState.orangePicks);
+                const winner = analysisResults.purple.totalScore >= analysisResults.orange.totalScore ? 'purple' : 'orange';
+                dom.winnerDeclaration.innerHTML = `<h3 class="text-2xl font-bold ${winner === 'purple' ? 'text-purple-400' : 'text-orange-500'}">EQUIPO GANADOR</h3><p class="text-lg">(Equipo ${winner === 'purple' ? 'Morado' : 'Naranja'})</p>`;
             }
             
+            function openAnalysisModal() {
+                dom.modalContent.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">${generateTeamDetailHTML(analysisResults.purple, "Morado", "purple")}${generateTeamDetailHTML(analysisResults.orange, "Naranja", "orange")}</div><div class="mt-6 pt-4 border-t border-white/10"><h3 class="text-xl font-bold text-center mb-2 text-yellow-300">Veredicto del Experto</h3><p class="text-center text-slate-300">${generateConclusionHTML(analysisResults.purple, analysisResults.orange)}</p></div>`;
+                dom.modalBackdrop.classList.remove('opacity-0', 'pointer-events-none'); 
+                dom.modalPanel.classList.remove('scale-95', 'opacity-0');
+            }
+            
+            function generateTeamDetailHTML(result, teamName, color) {
+                const maxScore = 25; const headerColor = color === 'purple' ? 'text-purple-400' : 'text-orange-500';
+                return `<div><h4 class="text-lg font-bold mb-3 ${headerColor}">Análisis Equipo ${teamName}</h4><div class="space-y-2 text-sm">${Object.entries(result.teamScores).map(([key, value]) => `<div class="capitalize"><p>${key}</p><div class="w-full bg-slate-600 rounded-full h-2.5"><div class="bg-${color}-500 h-2.5 rounded-full" style="width: ${Math.min(100, (value / maxScore) * 100)}%"></div></div></div>`).join('')}</div><div class="mt-4"><h5 class="font-semibold text-green-400">Puntos Fuertes:</h5><ul class="list-disc list-inside text-sm text-slate-300">${result.strengths.map(s => `<li>${s}</li>`).join('')}</ul></div><div class="mt-3"><h5 class="font-semibold text-red-400">Puntos Débiles:</h5><ul class="list-disc list-inside text-sm text-slate-300">${result.weaknesses.map(w => `<li>${w}</li>`).join('')}</ul></div></div>`;
+            }
+            
+            function getRecommendation(teamResult) {
+                if (!teamResult.roles.has('Supporter')) {
+                    const redundantRole = Object.keys(teamResult.roleCounts).find(r => teamResult.roleCounts[r] > 1 && r !== 'Defender') || 'Attacker';
+                    const redundantPick = teamResult.picks.find(p => p.role === redundantRole) || teamResult.picks[4];
+                    return `Su principal debilidad es la falta de un Soporte. Para mejorar, se podría haber sustituido a <b>${redundantPick.name}</b> por un Soporte como <b>Blissey</b> o <b>Eldegoss</b> para proporcionar la sostenibilidad necesaria.`;
+                }
+                if (!teamResult.roles.has('Defender')) {
+                     const redundantRole = Object.keys(teamResult.roleCounts).find(r => teamResult.roleCounts[r] > 1 && r !== 'Supporter') || 'Attacker';
+                     const redundantPick = teamResult.picks.find(p => p.role === redundantRole) || teamResult.picks[4];
+                     return `La ausencia de un Defensor confiable es su mayor problema. Un pick como <b>Snorlax</b> o <b>Umbreon</b> en lugar de <b>${redundantPick.name}</b> habría creado una frontline sólida.`;
+                }
+                return "Su composición es sólida, pero su éxito dependerá de la ejecución y de jugar alrededor de su condición de victoria principal.";
+            }
+
+            function generateConclusionHTML(purple, orange) {
+                 const winner = purple.totalScore >= orange.totalScore ? purple : orange; const loser = winner === purple ? orange : purple;
+                 const winnerName = winner === purple ? "Morado" : "Naranja";
+                 return `El <b>Equipo ${winnerName}</b> tiene la ventaja gracias a una composición más equilibrada y sinérgica. Su combinación de ${winner.strengths[0] || 'fortalezas clave'} les da una clara condición de victoria. <br><br>Para el equipo rival, la recomendación es clave: ${getRecommendation(loser)}`;
+            }
+
+            function closeModal() {
+                dom.modalBackdrop.classList.add('opacity-0', 'pointer-events-none');
+                dom.modalPanel.classList.add('scale-95', 'opacity-0');
+            }
+
             function updateUI() {
                 dom.confirmButton.classList.toggle('hidden', !gameState.selectedPokemon || gameState.phase === 'DONE');
                 dom.confirmButton.disabled = !gameState.selectedPokemon || gameState.phase === 'DONE';
@@ -481,6 +598,17 @@
             dom.pauseButton.addEventListener('click', togglePause);
             dom.playButton.addEventListener('click', togglePause);
             dom.confirmButton.addEventListener('click', confirmSelection);
+            if(dom.showDetailsButton){
+                dom.showDetailsButton.addEventListener('click', openAnalysisModal);
+            }
+            if(dom.closeModalButton) {
+                dom.closeModalButton.addEventListener('click', closeModal);
+            }
+            if(dom.modalBackdrop) {
+                dom.modalBackdrop.addEventListener('click', (e) => {
+                    if (e.target === dom.modalBackdrop) closeModal();
+                });
+            }
             if(dom.startIaDraftButton) {
                 dom.startIaDraftButton.addEventListener('click', () => alert('¡Esta función llegará en futuras actualizaciones! Gracias por tu interés.'));
             }
@@ -492,3 +620,4 @@
     </script>
 </body>
 </html>
+
