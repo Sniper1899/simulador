@@ -48,13 +48,13 @@
             border-radius: 1.5rem;
         }
         .pokemon-card {
-            transition: all 0.2s ease-in-out; cursor: pointer; border: 1px solid transparent;
+            transition: all 0.2s ease-in-out; cursor: pointer; border: 2px solid transparent;
             border-radius: 1rem;
         }
-        .pokemon-card:hover {
+        .pokemon-card.selected {
             transform: translateY(-4px);
             border-color: #38bdf8;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
         }
         .pokemon-card.disabled { filter: grayscale(100%) opacity(0.4); pointer-events: none; }
         
@@ -65,13 +65,21 @@
         .bg-role-Supporter { background: radial-gradient(circle at top right, rgba(234, 179, 8, 0.5), rgba(22, 25, 59, 0.5)); border-color: rgba(234, 179, 8, 0.4); }
 
         .main-title { background: linear-gradient(90deg, #67e8f9, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
+        .modal-content-area {
+            background: rgba(12, 12, 30, 0.8);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid #38bdf8;
+            border-radius: 1.5rem;
+        }
         .styled-button {
             background-image: linear-gradient(to right, #0ea5e9 0%, #a855f7 50%, #d946ef 100%);
             background-size: 200% auto;
             transition: all 0.3s;
         }
-        .styled-button:hover { background-position: right center; }
+        .styled-button:hover:not(:disabled) { background-position: right center; }
+        .styled-button:disabled { background-image: none; background-color: #374151; cursor: not-allowed; }
+        
         .secondary-button { background-color: rgba(30, 41, 59, 0.5); border: 1px solid #334155; transition: all 0.2s; }
         .secondary-button:hover { background-color: rgba(51, 65, 85, 0.7); border-color: #475569; }
         .role-filter-btn { background-color: rgba(30,41,59,0.5); border:1px solid #334155; transition: all 0.2s; }
@@ -90,10 +98,10 @@
             box-shadow: 0 0 20px, 0 0 10px inset;
             border-color: #facc15;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #38bdf8; border-radius: 20px; border: 2px solid transparent; background-clip: content-box;}
-        ::-webkit-scrollbar-thumb:hover { background-color: #67e8f9; }
+        #pokemon-grid::-webkit-scrollbar { width: 8px; }
+        #pokemon-grid::-webkit-scrollbar-track { background: transparent; }
+        #pokemon-grid::-webkit-scrollbar-thumb { background-color: #38bdf8; border-radius: 20px; border: 2px solid transparent; background-clip: content-box;}
+        #pokemon-grid::-webkit-scrollbar-thumb:hover { background-color: #67e8f9; }
         @keyframes subtle-pulse {
             0%, 100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.3); }
             50% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.7); }
@@ -105,7 +113,7 @@
 </head>
 <body class="p-2 sm:p-4">
 
-    <div id="draft-simulator" class="main-content w-full max-w-screen-xl mx-auto flex flex-col min-h-screen">
+    <div id="draft-simulator" class="main-content w-full max-w-7xl mx-auto flex flex-col min-h-screen">
         
         <header class="text-center mb-4 shrink-0">
             <h1 class="text-4xl sm:text-5xl font-extrabold main-title">SIMULADOR DE DRAFTEO</h1>
@@ -120,8 +128,16 @@
         <div id="draft-container" class="hidden flex-grow flex-col min-h-0">
              <div id="top-bar" class="flex justify-between items-center mb-4 px-4 shrink-0">
                 <div id="purple-bans" class="flex justify-center gap-2"></div>
-                <div id="timer-container" class="modern-panel py-2 px-6">
+                <div id="timer-container" class="modern-panel py-2 px-6 flex items-center gap-4">
                     <div id="timer" class="text-5xl font-bold text-white">--</div>
+                    <div id="timer-controls" class="flex flex-col">
+                        <button id="pause-button" title="Pausar Temporizador">
+                            <svg class="w-6 h-6 text-white hover:text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <button id="play-button" title="Reanudar Temporizador" class="hidden">
+                            <svg class="w-6 h-6 text-white hover:text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <div id="orange-bans" class="flex justify-center gap-2"></div>
             </div>
@@ -145,6 +161,7 @@
                             <button class="role-filter-btn px-4 py-1 rounded-full text-sm font-semibold" data-role="Supporter">Soporte</button>
                         </div>
                         <div id="pokemon-grid" class="flex-grow p-3 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 modern-panel overflow-y-auto" style="height: 50vh;"></div>
+                        <button id="confirm-button" class="w-full max-w-xs mx-auto styled-button font-bold py-3 px-4 text-lg rounded-xl mt-4 hidden">CONFIRMAR SELECCIÓN</button>
                     </div>
 
                     <div id="analysis-panel" class="hidden flex-grow flex flex-col justify-center items-center modern-panel p-4">
@@ -179,7 +196,7 @@
             let gameState;
             let timerInterval;
 
-            const initialGameState = { phase: 'IDLE', turn: 'PURPLE', purpleBans: [], orangeBans: [], purplePicks: [], orangePicks: [], pickOrderIndex: 0, banOrderIndex: 0, picksMadeThisTurn: 0 };
+            const initialGameState = { phase: 'IDLE', turn: 'PURPLE', purpleBans: [], orangeBans: [], purplePicks: [], orangePicks: [], pickOrderIndex: 0, banOrderIndex: 0, picksMadeThisTurn: 0, selectedPokemon: null, isPaused: false };
             const pickOrder = [ { team: 'PURPLE', count: 1 }, { team: 'ORANGE', count: 2 }, { team: 'PURPLE', count: 2 }, { team: 'ORANGE', count: 2 }, { team: 'PURPLE', count: 2 }, { team: 'ORANGE', count: 1 } ];
             const banOrder = [ { team: 'PURPLE', count: 1 }, { team: 'ORANGE', count: 1 }, { team: 'PURPLE', count: 1 }, { team: 'ORANGE', count: 1 } ];
 
@@ -202,6 +219,9 @@
                 phaseOverlayContainer: document.getElementById('phase-overlay-container'),
                 phaseText: document.getElementById('phase-text'),
                 timer: document.getElementById('timer'),
+                pauseButton: document.getElementById('pause-button'),
+                playButton: document.getElementById('play-button'),
+                confirmButton: document.getElementById('confirm-button'),
             };
 
             function initializeDraft() {
@@ -242,12 +262,19 @@
             function handlePokemonClick(pokemon) {
                 const isUnavailable = [...gameState.purpleBans, ...gameState.orangeBans, ...gameState.purplePicks, ...gameState.orangePicks].some(p => p && p.id === pokemon.id);
                 if (isUnavailable || gameState.phase === 'DONE') return;
-                
+                gameState.selectedPokemon = pokemon;
+                updateUI();
+            }
+
+            function confirmSelection() {
+                 if (!gameState.selectedPokemon) return;
+
                 if (gameState.phase === 'BAN') {
-                    handleBan(pokemon);
+                    handleBan(gameState.selectedPokemon);
                 } else if (gameState.phase === 'PICK') {
-                    handlePick(pokemon);
+                    handlePick(gameState.selectedPokemon);
                 }
+                gameState.selectedPokemon = null;
                 updateUI();
             }
 
@@ -309,18 +336,29 @@
                 stopTimer();
                 const duration = gameState.phase === 'BAN' ? 30 : 40;
                 let timeLeft = duration;
+                gameState.isPaused = false;
+                dom.pauseButton.classList.remove('hidden');
+                dom.playButton.classList.add('hidden');
                 dom.timer.textContent = timeLeft;
                 
                 timerInterval = setInterval(() => {
-                    timeLeft--;
-                    dom.timer.textContent = timeLeft >= 0 ? timeLeft : 0;
-                    if (timeLeft < 0) {
-                        nextTurn();
+                    if(!gameState.isPaused) {
+                        timeLeft--;
+                        dom.timer.textContent = timeLeft >= 0 ? timeLeft : 0;
+                        if (timeLeft < 0) {
+                            nextTurn();
+                        }
                     }
                 }, 1000);
             }
 
             function stopTimer() { clearInterval(timerInterval); if (dom.timer) dom.timer.textContent = '--'; }
+
+            function togglePause() {
+                gameState.isPaused = !gameState.isPaused;
+                dom.pauseButton.classList.toggle('hidden', gameState.isPaused);
+                dom.playButton.classList.toggle('hidden', !gameState.isPaused);
+            }
             
             function showAnalysis() {
                 stopTimer();
@@ -330,6 +368,8 @@
             }
             
             function updateUI() {
+                dom.confirmButton.classList.toggle('hidden', !gameState.selectedPokemon || gameState.phase === 'DONE');
+                dom.confirmButton.disabled = !gameState.selectedPokemon || gameState.phase === 'DONE';
                 if (gameState.phase !== 'DONE') renderPokemonGrid();
                 renderTeamSlots();
                 renderBanSlots();
@@ -347,7 +387,10 @@
                     card.className = 'pokemon-card flex flex-col items-center justify-end p-1 text-center';
                     card.classList.add(`bg-role-${pokemon.role}`);
                     if (unavailable.has(pokemon.id)) card.classList.add('disabled');
-                    else card.onclick = (e) => handlePokemonClick(pokemon);
+                    else {
+                        card.onclick = () => handlePokemonClick(pokemon);
+                        if(gameState.selectedPokemon && gameState.selectedPokemon.id === pokemon.id) card.classList.add('selected');
+                    }
                     const imageUrl = `https://unite.pokemon.com/images/pokemon/${pokemon.id}/stat/stat-${pokemon.id}.png`;
                     card.innerHTML = `<img src="${imageUrl}" alt="${pokemon.name}" class="w-16 h-16 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/64x64/1e293b/94a3b8?text=?';"><span class="text-xs font-bold mt-1 text-white" style="text-shadow: 1px 1px 2px black;">${pokemon.name}</span>`;
                     dom.pokemonGrid.appendChild(card);
@@ -435,9 +478,9 @@
                     renderPokemonGrid();
                 });
             });
-            if(dom.showDetailsButton){
-                dom.showDetailsButton.addEventListener('click', () => alert('Análisis detallado próximamente.'));
-            }
+            dom.pauseButton.addEventListener('click', togglePause);
+            dom.playButton.addEventListener('click', togglePause);
+            dom.confirmButton.addEventListener('click', confirmSelection);
             if(dom.startIaDraftButton) {
                 dom.startIaDraftButton.addEventListener('click', () => alert('¡Esta función llegará en futuras actualizaciones! Gracias por tu interés.'));
             }
